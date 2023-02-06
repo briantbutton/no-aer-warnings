@@ -1,0 +1,16 @@
+#!/bin/bash
+
+# if [[ $USER == 'root' ]]; then 
+	LIST=$(sudo dmesg | grep nvme | awk 'BEGIN { p=0 }; p { print; p=0 }; /AER:\s+PCIe\sBus\sError:\s+severity=Corrected,\s+type=Physical\s+Layer/ {p=1};' | grep -o '\[....:....\]')
+	LEN=${#LIST}
+	if [ $LEN -gt 50 ]; then
+    HEXADDR=$(echo $LIST | awk '1 {printf "%s", substr( $2, 2, 9) }')
+    echo $LEN
+    echo $HEXADDR
+  else
+    echo $LEN
+    echo small
+	fi
+# else
+#   echo "Root only"
+# fi

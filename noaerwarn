@@ -1,0 +1,20 @@
+#!/bin/bash
+# 
+if [[ $USER == 'root' ]]; then 
+  export LIST=$(sudo dmesg | grep nvme | awk 'BEGIN { p=0 }; p { print; p=0 }; /AER:\s+PCIe\sBus\sError:\s+severity=Corrected,\s+type=Physical\s+Layer/ {p=1};' | grep -o '\[....:....\]')
+  LEN=${#LIST}
+  if [ $LEN -gt 50 ]; then
+    export HEXADDR=$(echo $LIST | awk '1 {printf "%s", substr( $2, 2, 9) }')
+    export CURR=$(sudo setpci -v -d $HEXADDR CAP_EXP+0x8.w | awk '/0000/ {printf "%s", $7 }')
+    LENG=${#CURR};FRONT=${CURR:0:LENG-1};BACK=${CURR:LENG-1:LENG};NEWBACK=$BACK;
+    NEWBACK=${NEWBACK/f/e};NEWBACK=${NEWBACK/d/c};NEWBACK=${NEWBACK/b/a};NEWBACK=${NEWBACK/9/8}
+    NEWBACK=${NEWBACK/7/6};NEWBACK=${NEWBACK/5/4};NEWBACK=${NEWBACK/3/2};NEWBACK=${NEWBACK/1/0}
+    echo "sudo setpci -v -d $HEXADDR CAP_EXP+0x8.w=0x$FRONT$NEWBACK"
+    sudo setpci -v -d $HEXADDR CAP_EXP+0x8.w=0x$FRONT$NEWBACK
+  else
+    echo $LEN
+    echo small
+  fi
+else
+  echo "Root only"
+fi
